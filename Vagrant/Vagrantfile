@@ -3,15 +3,12 @@ $install_docker_script = <<SCRIPT
 echo Installing Docker...
 curl -sSL https://get.docker.com/ | sh
 SCRIPT
-#usermod -aG docker ubuntu
 
 $manager_script = <<SCRIPT
 echo Swarm Init...
 docker swarm init --listen-addr 10.20.100.50:2377 --advertise-addr 10.20.100.50:2377
 docker swarm join-token --quiet worker > /vagrant/worker_token
 SCRIPT
-
-#5000:5000 -e HOST=localhost -e PORT=5000 -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer
 
 $worker_script = <<SCRIPT
 echo Swarm Join...
