@@ -1,0 +1,6 @@
+---
+# defaults file for wordpress
+wp_site_title: examenDevops
+wp_site_user: examen
+wp_site_password: passexamen
+wp_site_email: 15006812@galileo.edu

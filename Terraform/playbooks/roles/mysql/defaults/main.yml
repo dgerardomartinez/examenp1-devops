@@ -1,0 +1,5 @@
+---
+# defaults file for mysql
+wp_mysql_db: examendm
+wp_mysql_user: examendm
+wp_mysql_password: passexamen
