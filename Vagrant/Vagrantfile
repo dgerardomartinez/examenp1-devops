@@ -1,0 +1,72 @@
+#script installation and processes server´s
+$install_docker_script = <<SCRIPT
+echo Installing Docker...
+curl -sSL https://get.docker.com/ | sh
+SCRIPT
+#usermod -aG docker ubuntu
+
+$manager_script = <<SCRIPT
+echo Swarm Init...
+docker swarm init --listen-addr 10.20.100.50:2377 --advertise-addr 10.20.100.50:2377
+docker swarm join-token --quiet worker > /vagrant/worker_token
+SCRIPT
+
+#5000:5000 -e HOST=localhost -e PORT=5000 -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer
+
+$worker_script = <<SCRIPT
+echo Swarm Join...
+docker swarm join --token $(cat /vagrant/worker_token) 10.20.100.50:2377
+SCRIPT
+
+#configuration server´s vagrant docker swarm
+servers=[
+  {
+    :hostname => "manager",
+    :ip => "10.20.100.50",
+    :box => "bento/centos-7.1",
+    :ram => 1024,
+    :cpu => 1
+  },
+  {
+    :hostname => "worker1",
+    :ip => "10.20.100.53",
+    :box => "bento/centos-7.1",
+    :ram => 1024,
+    :cpu => 1
+  },
+  {
+    :hostname => "worker2",
+    :ip => "10.20.100.54",
+    :box => "bento/centos-7.1",
+    :ram => 1024,
+    :cpu => 1  
+  }
+
+]
+#inicio de configuracion vagrant
+Vagrant.configure(2) do |config|
+  config.vagrant.plugins = "vagrant-docker-compose"
+  servers.each do |maquina|
+    config.vm.define maquina[:hostname] do |node|
+      node.vm.box = maquina[:box]
+      node.vm.hostname = maquina[:hostname]
+      node.vm.network "private_network", ip: maquina[:ip]
+      if maquina[:hostname] == "manager"
+        node.vm.provision "docker"
+        node.vm.provision "shell", inline: $install_docker_script, privileged: true
+        node.vm.provision "shell", inline: $manager_script, privileged: true
+        #node.vm.provision "docker_compose"
+      else
+        node.vm.provision "docker"
+        node.vm.provision "shell", inline: $install_docker_script, privileged: true
+        node.vm.provision "shell", inline: $worker_script, privileged: true
+        #node.vm.provision "docker_compose"
+      end
+      node.vm.provider "vmware_desktop" do |vb|
+        vb.vmx["memsize"] =maquina[:ram]
+        vb.vmx["numvcpus"]=maquina[:cpu]
+        
+      end
+    end
+  end
+end
